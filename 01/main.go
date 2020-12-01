@@ -24,17 +24,23 @@ func main() {
 		nums = append(nums, n)
 	}
 
-	res, err := Solve(nums)
+	res, err := Solve1(nums)
 	if err != nil {
-		fmt.Println("solve failed:", err)
+		fmt.Println("solve1 failed:", err)
 	}
+	fmt.Println("Answer1:", res)
 
-	fmt.Println("Answer:", res)
+	res, err = Solve2(nums)
+	if err != nil {
+		fmt.Println("solve2 failed:", err)
+	}
+	fmt.Println("Answer2:", res)
+
 }
 
 // Given an int slice, determine which two numbers adds up to 2020 and return
 // the product of them.
-func Solve(nums []int) (int, error) {
+func Solve1(nums []int) (int, error) {
 	for i, _ := range nums {
 		for j, _ := range nums {
 			fmt.Println(i, j)
@@ -43,6 +49,24 @@ func Solve(nums []int) (int, error) {
 			}
 			if nums[i]+nums[j] == 2020 {
 				return nums[i] * nums[j], nil
+			}
+		}
+	}
+	return -1, fmt.Errorf("no answer found")
+}
+
+// Given an int slice, determine which three numbers adds up to 2020 and return
+// the product of them.
+func Solve2(nums []int) (int, error) {
+	for i, a := range nums {
+		for j, b := range nums {
+			for k, c := range nums {
+				if i == j || i == k || j == k {
+					continue
+				}
+				if a+b+c == 2020 {
+					return a * b * c, nil
+				}
 			}
 		}
 	}
