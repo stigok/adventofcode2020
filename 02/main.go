@@ -14,7 +14,9 @@ func main() {
 	}
 	defer file.Close()
 
-	validPasswords := 0
+	validPasswordsV1 := 0
+	validPasswordsV2 := 0
+
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		s := scanner.Text()
@@ -23,11 +25,14 @@ func main() {
 			fmt.Println(err)
 		}
 		if p.IsValidV1() {
-			validPasswords++
+			validPasswordsV1++
+		}
+		if p.IsValidV2() {
+			validPasswordsV2++
 		}
 	}
 
-	fmt.Printf("found %d valid passwords\n", validPasswords)
+	fmt.Printf("found %d (v1) and %d (v2) valid passwords\n", validPasswordsV1, validPasswordsV2)
 }
 
 type PasswordPolicy struct {
@@ -40,6 +45,12 @@ type PasswordPolicy struct {
 func (p PasswordPolicy) IsValidV1() bool {
 	n := strings.Count(p.Password, p.Char)
 	return n >= p.MinOccurences && n <= p.MaxOccurences
+}
+
+func (p PasswordPolicy) IsValidV2() bool {
+	a := p.Password[p.MinOccurences-1] == p.Char[0]
+	b := p.Password[p.MaxOccurences-1] == p.Char[0]
+	return (a && !b) || (!a && b)
 }
 
 func ParsePasswordPolicy(s string) (pol PasswordPolicy, err error) {
