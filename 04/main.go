@@ -4,6 +4,8 @@ import "bufio"
 import "fmt"
 import "os"
 import "bytes"
+import "regexp"
+import "strconv"
 import "strings"
 
 func main() {
@@ -18,15 +20,55 @@ func main() {
 	}
 
 	fmt.Println(Solve1(lines))
+	fmt.Println(Solve2(lines))
+}
+
+var validators map[string]func(string) bool = map[string]func(string) bool{
+	"byr": func(s string) bool {
+		n, err := strconv.Atoi(s)
+		return err == nil && n >= 1920 && n <= 2002
+	},
+	"iyr": func(s string) bool {
+		n, err := strconv.Atoi(s)
+		return err == nil && n >= 2010 && n <= 2020
+	},
+	"eyr": func(s string) bool {
+		n, err := strconv.Atoi(s)
+		return err == nil && n >= 2020 && n <= 2030
+	},
+	"hgt": func(s string) bool {
+		pat := regexp.MustCompile(`(\d+)(cm|in)`)
+		match := pat.FindStringSubmatch(s)
+		if match == nil {
+			return false
+		}
+		n, _ := strconv.Atoi(match[1])
+		if match[2] == "cm" {
+			return n >= 150 && n <= 193
+		} else {
+			return n >= 59 && n <= 76
+		}
+	},
+	"hcl": func(s string) bool {
+		pat := regexp.MustCompile(`#[a-f0-9]{6}`)
+		return pat.MatchString(s)
+	},
+	"ecl": func(s string) bool {
+		pat := regexp.MustCompile(`^(amb|blu|brn|gry|grn|hzl|oth)$`)
+		return pat.MatchString(s)
+	},
+	"pid": func(s string) bool {
+		pat := regexp.MustCompile(`^\d{9}$`)
+		return pat.MatchString(s)
+	},
 }
 
 func Solve1(lines []string) int {
 	validCount := 0
-	req_keys := []string{"byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"}
 	for _, line := range lines {
 		valid := true
-		for _, k := range req_keys {
-			if !strings.Contains(line, fmt.Sprintf("%s:", k)) {
+		for key, _ := range validators {
+			if !strings.Contains(line, fmt.Sprintf("%s:", key)) {
 				valid = false
 				break
 			}
@@ -34,7 +76,31 @@ func Solve1(lines []string) int {
 		if valid {
 			validCount++
 		}
-		fmt.Printf("%v - %s\n", valid, line)
+	}
+
+	return validCount
+}
+
+func Solve2(lines []string) int {
+	validCount := 0
+	for _, line := range lines {
+		fields := make(map[string]string)
+		for _, pair := range strings.Split(line, " ") {
+			split := strings.Split(pair, ":")
+			fields[split[0]] = split[1]
+		}
+
+		valid := true
+		for key, validate := range validators {
+			s, ok := fields[key]
+			if !ok || !validate(s) {
+				valid = false
+				break
+			}
+		}
+		if valid {
+			validCount++
+		}
 	}
 
 	return validCount
