@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"sort"
 )
 
 func main() {
@@ -17,6 +18,7 @@ func main() {
 	}
 
 	fmt.Println(Solve1(lines))
+	fmt.Println(Solve2(lines))
 }
 
 func Solve1(iids []string) int {
@@ -26,6 +28,23 @@ func Solve1(iids []string) int {
 		sids = append(sids, sid)
 	}
 	return MaxInt(sids)
+}
+
+func Solve2(iids []string) int {
+	var sids []int
+	for _, iid := range iids {
+		_, _, sid := DecodeItinerary(iid)
+		sids = append(sids, sid)
+	}
+
+	sort.Ints(sids)
+
+	for i, n := range sids {
+		if sids[i+1] == n+2 {
+			return n + 1
+		}
+	}
+	return -1
 }
 
 // Get ticket information by full itinerary ID
