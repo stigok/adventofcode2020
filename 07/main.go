@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 )
 
 func main() {
@@ -16,12 +17,16 @@ func main() {
 	}
 
 	fmt.Println(Solve1(lines))
+	fmt.Println(Solve2(lines))
+	fmt.Println("already guessed 447")
 }
 
-var colorPat *regexp.Regexp = regexp.MustCompile(`(\w+ \w+) bag`)
+var colorPat *regexp.Regexp = regexp.MustCompile(`^(\w+ \w+) bags? contain`)
+var qtyPat *regexp.Regexp = regexp.MustCompile(`(\d+) (\w+ \w+) bag`)
 
-func GetBagSequences(lines []string) [][]string {
+func GetBagSequences(lines []string) ([][]string, Bags) {
 	var colors [][]string
+	var bags Bags
 
 	for _, s := range lines {
 		match := colorPat.FindAllStringSubmatch(s, -1)
@@ -30,9 +35,25 @@ func GetBagSequences(lines []string) [][]string {
 			seq = append(seq, m[1])
 		}
 		colors = append(colors, seq)
+
+		bag := &Bag{Color: match[0][1]}
+		bags = append(bags, bag)
 	}
 
-	return colors
+	// Fill in children
+	for i, s := range lines {
+		match := qtyPat.FindAllStringSubmatch(s, -1)
+		for _, m := range match {
+			qty, _ := strconv.Atoi(m[1])
+			color := m[2]
+			bags[i].Contains = append(bags[i].Contains, Container{
+				Bag:   bags.Get(color),
+				Count: qty,
+			})
+		}
+	}
+
+	return colors, bags
 }
 
 func IndexOf(slice []string, s string) int {
@@ -114,6 +135,12 @@ type Bag struct {
 	Color    string
 	Children Bags
 	Parents  Bags
+	Contains []Container
+}
+
+type Container struct {
+	Bag   *Bag
+	Count int
 }
 
 func ParseBags(seqs [][]string) Bags {
@@ -144,9 +171,35 @@ func ParseBags(seqs [][]string) Bags {
 }
 
 func Solve1(lines []string) int {
-	seqs := GetBagSequences(lines)
+	seqs, _ := GetBagSequences(lines)
 	bags := ParseBags(seqs)
 	mybag := bags.Get("shiny gold")
 	parents := bags.FindNestedParents(mybag)
 	return len(parents)
+}
+
+func Solve2(lines []string) int {
+	_, bags := GetBagSequences(lines)
+	mybag := bags.Get("shiny gold")
+
+	var c Container
+	q := make([]Container, len(mybag.Contains))
+	copy(q, mybag.Contains)
+
+	sum := 0
+	for true {
+		if len(q) == 0 {
+			break
+		}
+
+		// Array shift
+		c, q = q[0], q[1:]
+		sum += c.Count
+
+		for i := 0; i < c.Count; i++ {
+			q = append(q, c.Bag.Contains...)
+		}
+	}
+
+	return sum
 }
